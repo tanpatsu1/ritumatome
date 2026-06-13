@@ -62,9 +62,10 @@ jobs:
           npx -y staticrypt index.html \
             -p "$VIEW_PASSWORD" \
             --salt "$STATICRYPT_SALT" \
-            -r 365 \
+            --remember 365 \
+            --short \
             -d docs
-          rm -f index.html
+          rm -f index.html .staticrypt.json
 
       - name: 結果をコミット
         run: |

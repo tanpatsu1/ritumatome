@@ -18,6 +18,9 @@ debug_list.html
 # Claude Code ローカル設定
 .claude/
 
+# staticrypt の設定ファイル
+.staticrypt.json
+
 # Python
 __pycache__/
 *.pyc
