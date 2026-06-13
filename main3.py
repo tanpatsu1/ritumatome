@@ -46,7 +46,7 @@ DIGEST_OUT = DIR / "digest.html"
 TEMPLATE = DIR / "archive_template.html"
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")  # ここに直書きも可
-GEMINI_MODEL = "gemini-2.5-flash-lite"
+GEMINI_MODEL = "gemini-2.5-flash"
 BATCH_SIZE = 10          # 1リクエストあたりの判定件数
 DETAIL_WAIT_SEC = 1.5    # 詳細ページ間の待機(サーバ負荷配慮)
 
