@@ -370,6 +370,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--login", action="store_true", help="初回ログイン(手動)")
     ap.add_argument("--headless", action="store_true")
+    ap.add_argument("--auth-state", default="", help="クッキー保存ファイル(クラウド用)。指定時はbrowser_profileを使わない")
     args = ap.parse_args()
 
     if not args.login and not GEMINI_API_KEY:
@@ -377,13 +378,23 @@ def main():
         sys.exit(1)
 
     with sync_playwright() as p:
-        ctx = p.chromium.launch_persistent_context(
-            str(USER_DATA_DIR),
-            headless=args.headless and not args.login,
-            viewport={"width": 1440, "height": 1000},
-            locale="ja-JP",
-        )
-        page = ctx.pages[0] if ctx.pages else ctx.new_page()
+        if args.auth_state:
+            # クラウド用: 永続プロファイルを使わず、クッキーだけでログイン状態を再現
+            browser = p.chromium.launch(headless=True)
+            ctx = browser.new_context(
+                storage_state=args.auth_state,
+                viewport={"width": 1440, "height": 1000},
+                locale="ja-JP",
+            )
+            page = ctx.new_page()
+        else:
+            ctx = p.chromium.launch_persistent_context(
+                str(USER_DATA_DIR),
+                headless=args.headless and not args.login,
+                viewport={"width": 1440, "height": 1000},
+                locale="ja-JP",
+            )
+            page = ctx.pages[0] if ctx.pages else ctx.new_page()
 
         if args.login:
             page.goto(LIST_URL)

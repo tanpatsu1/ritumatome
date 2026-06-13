@@ -7,6 +7,7 @@ notifications.json
 
 # 平文の生成物（暗号化版 docs/index.html だけを公開する）
 archive.html
+/index.html
 digest.html
 archive_preview.html
 

@@ -1,0 +1,79 @@
+name: 毎朝ポータル巡回
+
+# 毎朝 JST 8:00 に自動実行 (GitHub の cron は UTC なので 23:00 = 日本の翌8:00)
+# 手動でも実行できる (Actions タブの Run workflow ボタン)
+on:
+  schedule:
+    - cron: "0 23 * * *"
+  workflow_dispatch:
+
+# 結果(暗号化データ・公開ページ)をリポジトリに書き戻すための権限
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: コード取得
+        uses: actions/checkout@v4
+
+      - name: Python 用意
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 依存インストール
+        run: |
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: ログイン情報の復元・データ復号
+        env:
+          AUTH_STATE: ${{ secrets.AUTH_STATE }}
+          VIEW_PASSWORD: ${{ secrets.VIEW_PASSWORD }}
+        run: |
+          printf '%s' "$AUTH_STATE" > auth_state.json
+          if [ -f notifications.json.enc ]; then
+            openssl enc -d -aes-256-cbc -pbkdf2 \
+              -in notifications.json.enc -out notifications.json \
+              -pass env:VIEW_PASSWORD
+          fi
+
+      - name: ポータル巡回・要約
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python main3.py --headless --auth-state auth_state.json
+
+      - name: データ暗号化・パスワード付きページ生成
+        env:
+          VIEW_PASSWORD: ${{ secrets.VIEW_PASSWORD }}
+          STATICRYPT_SALT: ${{ secrets.STATICRYPT_SALT }}
+        run: |
+          # 状態ファイルを暗号化して保存
+          openssl enc -aes-256-cbc -pbkdf2 -salt \
+            -in notifications.json -out notifications.json.enc \
+            -pass env:VIEW_PASSWORD
+          # archive.html にパスワード錠をかけて docs/index.html として出力
+          # --salt 固定 + 同じパスワードで「記憶」が毎日のビルドをまたいで有効になる
+          mkdir -p docs
+          cp archive.html index.html
+          npx -y staticrypt index.html \
+            -p "$VIEW_PASSWORD" \
+            --salt "$STATICRYPT_SALT" \
+            -r 365 \
+            -d docs
+          rm -f index.html
+
+      - name: 結果をコミット
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add notifications.json.enc docs/index.html
+          if git diff --cached --quiet; then
+            echo "変更なし(新着なし)"
+          else
+            git commit -m "auto: 自動更新 $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push
+          fi
