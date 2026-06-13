@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PORTAL ARCHIVE — 通知アーカイブ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700;800&family=Noto+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f5f1;--surface:#fff;--surface-2:#efede7;
+    --line:#e5e2da;--line-strong:#d4d0c5;
+    --ink:#262421;--ink-dim:#6f6c64;--ink-faint:#a39f94;
+    --enji:#9e2235;--enji-soft:#9e22351a;
+    --amber:#b07b1e;--amber-soft:#b07b1e14;
+    --gold:#c79a3b;--gold-soft:#c79a3b1f;
+    --radius:12px;
+    --shadow:0 1px 2px #26242108,0 4px 14px #26242109;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:'Noto Sans JP',sans-serif;font-size:14.5px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  ::selection{background:var(--enji);color:#fff}
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px 120px}
+  header{padding:40px 0 0}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.24em;color:var(--enji);margin-bottom:10px}
+  .head-top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  h1{font-family:'Shippori Mincho',serif;font-weight:800;font-size:clamp(24px,5vw,34px);letter-spacing:.04em}
+  .head-meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);display:flex;gap:16px;flex-wrap:wrap;padding-bottom:6px}
+  .head-meta b{color:var(--ink-dim);font-weight:500}
+  .pages{display:inline-flex;margin-top:20px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px;flex-wrap:wrap}
+  .page-btn{font:inherit;font-size:13px;font-weight:500;border:none;background:transparent;color:var(--ink-dim);border-radius:999px;padding:7px 18px;cursor:pointer;transition:all .18s}
+  .page-btn .n{font-family:'IBM Plex Mono',monospace;font-size:10.5px;margin-left:6px;opacity:.65}
+  .page-btn.on{background:var(--ink);color:#fff;box-shadow:var(--shadow)}
+  .page-btn.imp.on{background:var(--gold);color:#3a2c08}
+  .controls{position:sticky;top:0;z-index:20;background:linear-gradient(var(--bg) 86%,transparent);padding:14px 0}
+  .search{width:100%;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);color:var(--ink);font:inherit;font-size:16px;padding:12px 17px;outline:none;box-shadow:var(--shadow);transition:border-color .15s}
+  .search::placeholder{color:var(--ink-faint)}
+  .search:focus{border-color:var(--enji)}
+  .filters{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap;align-items:center}
+  .tab,.chip{font:inherit;cursor:pointer;transition:all .15s;border-radius:999px}
+  .tab{font-size:12.5px;font-weight:500;color:var(--ink-dim);background:var(--surface);border:1px solid var(--line-strong);padding:6px 14px}
+  .tab .n{font-family:'IBM Plex Mono',monospace;font-size:10px;margin-left:4px;color:var(--ink-faint)}
+  .tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .tab.on .n{color:#fff;opacity:.6}
+  .sep{width:1px;height:18px;background:var(--line-strong);margin:0 4px}
+  .chip{font-size:11.5px;color:var(--ink-dim);background:transparent;border:1px solid transparent;padding:5px 11px}
+  .chip:hover{color:var(--ink)}
+  .chip.on{color:var(--enji);background:var(--enji-soft);border-color:#9e223544}
+  .month{display:flex;align-items:center;gap:14px;margin:32px 0 12px}
+  .month h2{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;letter-spacing:.22em;color:var(--ink-dim)}
+  .month .rule{flex:1;height:1px;background:var(--line-strong)}
+  .month .cnt{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-faint)}
+  .card{display:grid;grid-template-columns:96px 1fr;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:9px;overflow:hidden;box-shadow:var(--shadow);transition:border-color .15s,opacity .3s,transform .3s}
+  .card:hover{border-color:var(--line-strong)}
+  .card.s3{border-left:3px solid var(--enji)}
+  .card.s2{border-left:3px solid var(--amber)}
+  .card.s1{border-left:3px solid var(--line-strong)}
+  .card.expired{opacity:.5;filter:saturate(.3)}
+  .card.leaving{opacity:0;transform:translateX(28px)}
+  .rail{padding:14px 0 14px 14px;font-family:'IBM Plex Mono',monospace;border-right:1px solid var(--line);background:linear-gradient(#fdfdfb,#fafaf6);display:flex;flex-direction:column;gap:2px}
+  .rail .lbl{font-size:8.5px;letter-spacing:.1em;color:var(--ink-faint)}
+  .rail .date{font-size:11px;color:var(--ink-dim)}
+  .rail .dl-wrap{margin-top:7px;padding-top:7px;border-top:1px dashed var(--line-strong)}
+  .rail .dl-date{font-size:11px;color:var(--amber);font-weight:500}
+  .rail .dday{margin-top:1px;font-size:13px;font-weight:700;color:var(--ink-faint)}
+  .rail .dday.hot{color:var(--enji)}
+  .rail .dday.warm{color:var(--amber)}
+  .rail .dday.done{font-size:10px;font-weight:500;letter-spacing:.04em}
+  .body{padding:13px 16px 12px;min-width:0}
+  .meta-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px}
+  .stars{font-size:11px;letter-spacing:.1em}
+  .s3 .stars{color:var(--enji)}.s2 .stars{color:var(--amber)}.s1 .stars{color:var(--ink-faint)}
+  .cat{font-size:10.5px;color:var(--ink-dim);background:var(--surface-2);border-radius:5px;padding:2px 9px}
+  .cat.career{color:var(--enji);background:var(--enji-soft)}
+  .dept{font-size:10.5px;color:var(--ink-faint)}
+  .badge-deadline{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#fff;background:var(--amber);border-radius:5px;padding:2px 8px;font-weight:500}
+  .badge-deadline.hot{background:var(--enji)}
+  .badge-deadline.done{background:var(--ink-faint)}
+  .ttl{font-weight:700;font-size:15px;letter-spacing:.01em;overflow-wrap:anywhere}
+  .sum{margin-top:5px;font-size:13.2px;color:var(--ink-dim)}
+  .s3 .sum{color:#56534b}
+  details.full{margin-top:9px}
+  details.full summary{list-style:none;cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-dim);border:1px solid var(--line-strong);border-radius:999px;padding:4px 13px;transition:all .15s}
+  details.full summary::-webkit-details-marker{display:none}
+  details.full summary:hover{color:var(--enji);border-color:var(--enji)}
+  details.full[open] summary{color:var(--enji);border-color:var(--enji);background:var(--enji-soft)}
+  details.full .txt{margin-top:10px;background:var(--surface-2);border-radius:8px;padding:14px 16px;font-size:12.8px;color:#4d4a43;white-space:pre-line;overflow-wrap:anywhere}
+  .foot{margin-top:11px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .link{font-size:12px;color:var(--ink-dim);text-decoration:none;border-bottom:1px solid var(--line-strong);padding-bottom:1px;transition:all .15s}
+  .link:hover{color:var(--enji);border-color:var(--enji)}
+  .act{font:inherit;font-size:18px;line-height:1;cursor:pointer;background:none;border:none;padding:2px 4px;transition:transform .12s;color:var(--ink-faint)}
+  .act:hover{transform:scale(1.18)}
+  .act.star-btn.on{color:var(--gold)}
+  .spacer{margin-left:auto}
+  .read-btn{font:inherit;font-size:12px;font-weight:500;cursor:pointer;color:var(--ink-dim);background:transparent;border:1px solid var(--line-strong);border-radius:999px;padding:5px 14px;transition:all .15s}
+  .read-btn:hover{color:#fff;background:var(--ink);border-color:var(--ink)}
+  .empty{text-align:center;padding:64px 0;color:var(--ink-faint);font-size:13px}
+  .empty b{display:block;font-family:'Shippori Mincho',serif;font-size:17px;color:var(--ink-dim);margin-bottom:6px}
+  .bulk{font-size:11.5px;color:var(--ink-faint);background:none;border:none;cursor:pointer;text-decoration:underline}
+  .bulk:hover{color:var(--enji)}
+  @media(max-width:560px){
+    .wrap{padding:0 13px 120px}
+    .card{grid-template-columns:78px 1fr}
+    .rail{padding:12px 0 12px 11px}
+    .body{padding:12px 13px}
+    .search{font-size:16px}
+    .filters{gap:5px}
+    .tab{padding:6px 12px}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">RITSUMEIKAN STUDENT PORTAL — ARCHIVE</div>
+  <div class="head-top">
+    <h1>通知アーカイブ</h1>
+    <div class="head-meta">
+      <span>最終更新 <b>__UPDATED__</b></span>
+      <span>要対応 <b id="hot-n" style="color:var(--enji)">—</b></span>
+    </div>
+  </div>
+  <div class="pages">
+    <button class="page-btn on" data-page="inbox">受信箱<span class="n" id="n-inbox"></span></button>
+    <button class="page-btn imp" data-page="important">⭐ 重要<span class="n" id="n-important"></span></button>
+    <button class="page-btn" data-page="read">既読<span class="n" id="n-read"></span></button>
+  </div>
+</header>
+
+<div class="controls">
+  <input class="search" id="q" type="search" placeholder="タイトル・要約・本文を検索…" autocomplete="off">
+  <div class="filters" id="filters">
+    <button class="tab on" data-star="all">全件<span class="n" id="n-all"></span></button>
+    <button class="tab" data-star="3">★★★<span class="n" id="n-3"></span></button>
+    <button class="tab" data-star="2">★★<span class="n" id="n-2"></span></button>
+    <button class="tab" data-star="1">★<span class="n" id="n-1"></span></button>
+    <span class="sep"></span>
+    <span id="chips" style="display:contents"></span>
+  </div>
+  <div style="margin-top:9px;display:flex;align-items:center;gap:14px">
+    <button class="bulk" id="bulk-read">表示中を一括既読</button>
+    <span id="result-count" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-faint)"></span>
+  </div>
+</div>
+
+
+<main id="feed"></main>
+
+<div class="empty" id="empty" hidden>
+  <b id="empty-ttl">該当する通知はありません</b>
+  <span id="empty-sub"></span>
+</div>
+
+</div>
+
+<script>
+const TODAY = new Date('__TODAY__T00:00:00+09:00');
+const RAW = /*__DATA__*/[];
+
+/* ===== カテゴリ正規化(Geminiの表記ゆれを吸収) ===== */
+const CAT_CANON = [
+  ['就活・院', ['就活','就職','進路','インターン','キャリア','大学院','院','進学','研究科']],
+  ['履修・成績', ['履修','成績','単位','時間割','試験','授業']],
+  ['休講・補講', ['休講','補講','教室変更']],
+  ['手続き・締切', ['手続','締切','申請','奨学','学費','授業料','証明']],
+  ['留学', ['留学','海外','国際','language','英語','TOEIC','TOEFL']],
+  ['学生生活', ['学生生活','課外','サークル','イベント','ボランティア','健康']],
+  ['その他', []],
+];
+function canonCat(c){
+  c = (c||'').trim();
+  for(const [name,keys] of CAT_CANON){ if(c===name) return name; }
+  for(const [name,keys] of CAT_CANON){ if(keys.some(k=>c.includes(k))) return name; }
+  return c || 'その他';
+}
+const DATA = RAW.map(it=>({...it, cat: canonCat(it.cat)}));
+
+/* ===== 永続化(localStorage): 既読 と 重要 ===== */
+const LS_READ='portal_read_v1', LS_IMP='portal_important_v1';
+let readSet, impSet;
+try{readSet=new Set(JSON.parse(localStorage.getItem(LS_READ)||'[]'))}catch(e){readSet=new Set()}
+try{impSet=new Set(JSON.parse(localStorage.getItem(LS_IMP)||'[]'))}catch(e){impSet=new Set()}
+const persist=()=>{try{localStorage.setItem(LS_READ,JSON.stringify([...readSet]));localStorage.setItem(LS_IMP,JSON.stringify([...impSet]))}catch(e){}};
+
+let page='inbox', starF='all', catF=new Set(), qF='';
+
+const fmt=d=>d?d.slice(5).replace('-','/'):'';
+const dday=dl=>dl?Math.ceil((new Date(dl+'T23:59:59+09:00')-TODAY)/86400000):null;
+const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+function cardHTML(it){
+  const dl=dday(it.deadline);
+  const expired=it.deadline&&dl<0;
+  const isRead=readSet.has(it.id);
+  const isImp=impSet.has(it.id);
+  // 左レール: 受信日 + 締切(あれば)
+  let rail=`<div class="lbl">受信</div><div class="date">${fmt(it.date)}</div>`;
+  if(it.deadline){
+    let dc=dl<0?'done':dl<=3?'hot':dl<=7?'warm':'';
+    let dtxt=dl<0?'締切済':'残り'+dl+'日';
+    rail+=`<div class="dl-wrap"><div class="lbl">締切</div>
+      <div class="dl-date">${fmt(it.deadline)}</div>
+      <div class="dday ${dc}">${dtxt}</div></div>`;
+  }
+  // 締切バッジ(本文側にも目立つ形で)
+  let dlBadge='';
+  if(it.deadline){
+    let cls=dl<0?'done':dl<=3?'hot':'';
+    let t=dl<0?`締切 ${fmt(it.deadline)}`:`締切 ${fmt(it.deadline)}（残り${dl}日）`;
+    dlBadge=`<span class="badge-deadline ${cls}">${t}</span>`;
+  }
+  return `<article class="card s${it.star}${expired?' expired':''}" data-id="${it.id}">
+    <div class="rail">${rail}</div>
+    <div class="body">
+      <div class="meta-row">
+        <span class="stars">${'★'.repeat(it.star)}</span>
+        <span class="cat${it.career?' career':''}">${esc(it.cat)}</span>
+        <span class="dept">${esc(it.dept)}</span>
+        ${dlBadge}
+      </div>
+      <div class="ttl">${esc(it.ttl)}</div>
+      <div class="sum">${esc(it.sum)}</div>
+      <details class="full"><summary>本文を見る</summary><div class="txt">${esc(it.body)}</div></details>
+      <div class="foot">
+        <a class="link" href="${it.url}" target="_blank" rel="noopener">ポータルで開く →</a>
+        <button class="act star-btn ${isImp?'on':''}" title="重要に保存" onclick="toggleImp('${it.id}',this)">${isImp?'★':'☆'}</button>
+        <span class="spacer"></span>
+        <button class="read-btn" onclick="toggleRead('${it.id}',this)">${isRead?'受信箱に戻す':'✓ 既読にする'}</button>
+      </div>
+    </div>
+  </article>`;
+}
+
+function toggleRead(id,btn){
+  const card=btn.closest('.card');
+  card.classList.add('leaving');
+  setTimeout(()=>{readSet.has(id)?readSet.delete(id):readSet.add(id);persist();render();},280);
+}
+function toggleImp(id,btn){
+  impSet.has(id)?impSet.delete(id):impSet.add(id);
+  persist();
+  // 重要ページ表示中なら消えるアニメ、それ以外はその場で★切替
+  if(page==='important'){const c=btn.closest('.card');c.classList.add('leaving');setTimeout(render,280);}
+  else render();
+}
+
+function pass(it){
+  if(page==='important'){ if(!impSet.has(it.id)) return false; }
+  else if((page==='read')!==readSet.has(it.id)) return false;
+  if(starF!=='all'&&it.star!==+starF) return false;
+  if(catF.size&&!catF.has(it.cat)) return false;
+  if(qF&&!((it.ttl||'')+(it.sum||'')+(it.body||'')+(it.dept||'')+(it.cat||'')).toLowerCase().includes(qF)) return false;
+  return true;
+}
+
+function buildChips(){
+  const order=['就活・院','履修・成績','休講・補講','手続き・締切','留学','学生生活','その他'];
+  const present=new Set(DATA.map(i=>i.cat));
+  const cats=order.filter(c=>present.has(c));
+  document.getElementById('chips').innerHTML=
+    cats.map(c=>`<button class="chip" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+}
+
+function render(){
+  const items=DATA.filter(pass).sort((a,b)=>b.date.localeCompare(a.date)||b.star-a.star);
+
+  // 月別グループ(★1も含めて全部フラットに表示。折りたたみは廃止)
+  const groups={};
+  items.forEach(it=>{const m=it.date.slice(0,7);(groups[m]??=[]).push(it);});
+  let html='';
+  Object.keys(groups).sort().reverse().forEach(m=>{
+    html+=`<div class="month"><h2>${m.replace('-',' / ')}</h2><span class="rule"></span><span class="cnt">${groups[m].length}件</span></div>`;
+    html+=groups[m].map(cardHTML).join('');
+  });
+  document.getElementById('feed').innerHTML=html;
+
+  document.getElementById('empty').hidden=items.length>0;
+  document.getElementById('empty-ttl').textContent=
+    page==='important'?'重要に保存した通知はありません':'該当する通知はありません';
+  document.getElementById('empty-sub').textContent=
+    page==='important'?'各カードの☆を押すと、ここに保存されます。'
+    :page==='read'?'受信箱で「✓ 既読にする」を押すと、ここに移動します。'
+    :'タブやカテゴリ、検索語を変えてみてください。';
+  document.getElementById('result-count').textContent=`表示 ${items.length}件`;
+
+  // カウント
+  const base = page==='important' ? DATA.filter(i=>impSet.has(i.id))
+             : DATA.filter(i=>(page==='read')===readSet.has(i.id));
+  const c=s=>base.filter(i=>i.star===s).length;
+  document.getElementById('n-all').textContent=base.length;
+  document.getElementById('n-3').textContent=c(3);
+  document.getElementById('n-2').textContent=c(2);
+  document.getElementById('n-1').textContent=c(1);
+  document.getElementById('n-inbox').textContent=DATA.length-readSet.size;
+  document.getElementById('n-read').textContent=readSet.size;
+  document.getElementById('n-important').textContent=impSet.size;
+  document.getElementById('hot-n').textContent=
+    DATA.filter(i=>!readSet.has(i.id)&&i.star===3&&!(i.deadline&&dday(i.deadline)<0)).length+'件';
+}
+
+document.querySelector('.pages').addEventListener('click',e=>{
+  const b=e.target.closest('.page-btn');if(!b)return;
+  document.querySelectorAll('.page-btn').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');page=b.dataset.page;render();
+});
+document.getElementById('filters').addEventListener('click',e=>{
+  const t=e.target.closest('.tab');
+  if(t){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');starF=t.dataset.star;render();return;}
+  const c=e.target.closest('.chip');
+  if(c){c.classList.toggle('on');const v=c.dataset.cat;catF.has(v)?catF.delete(v):catF.add(v);render();}
+});
+document.getElementById('q').addEventListener('input',e=>{qF=e.target.value.trim().toLowerCase();render();});
+document.getElementById('bulk-read').addEventListener('click',()=>{
+  if(page==='important'){alert('重要ページでは一括既読はできません');return;}
+  const targets=DATA.filter(pass);
+  if(!targets.length)return;
+  if(!confirm(`表示中の ${targets.length}件 をすべて既読にしますか?`))return;
+  targets.forEach(it=>{readSet.add(it.id)});persist();render();
+});
+
+buildChips();
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+# === 絶対に公開してはいけないもの（ログイン情報・生データ） ===
+auth_state.json
+browser_profile/
+
+# 生の通知データ（暗号化した notifications.json.enc だけを公開する）
+notifications.json
+
+# 平文の生成物（暗号化版 docs/index.html だけを公開する）
+archive.html
+digest.html
+archive_preview.html
+
+# デバッグ・一時ファイル
+debug_list.html
+*_screenshot.png
+
+# Claude Code ローカル設定
+.claude/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
