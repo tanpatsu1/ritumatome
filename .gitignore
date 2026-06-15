@@ -21,6 +21,9 @@ debug_list.html
 # staticrypt の設定ファイル
 .staticrypt.json
 
+# wrangler のローカルキャッシュ
+.wrangler/
+
 # Python
 __pycache__/
 *.pyc
