@@ -182,7 +182,41 @@ const LS_READ='portal_read_v1', LS_IMP='portal_important_v1';
 let readSet, impSet;
 try{readSet=new Set(JSON.parse(localStorage.getItem(LS_READ)||'[]'))}catch(e){readSet=new Set()}
 try{impSet=new Set(JSON.parse(localStorage.getItem(LS_IMP)||'[]'))}catch(e){impSet=new Set()}
-const persist=()=>{try{localStorage.setItem(LS_READ,JSON.stringify([...readSet]));localStorage.setItem(LS_IMP,JSON.stringify([...impSet]))}catch(e){}};
+const persistLocal=()=>{try{localStorage.setItem(LS_READ,JSON.stringify([...readSet]));localStorage.setItem(LS_IMP,JSON.stringify([...impSet]))}catch(e){}};
+const persist=()=>{persistLocal();schedulePush();};
+
+/* ===== 端末間同期 (Cloudflare Worker + KV / AES暗号化) ===== */
+const SYNC_URL='__SYNC_URL__', SYNC_TOKEN='__SYNC_TOKEN__', SYNC_KEY_HEX='__SYNC_KEY__';
+const LS_TS='portal_sync_ts';
+const syncEnabled = SYNC_URL && SYNC_URL.indexOf('__')!==0;
+let stateTs = +(localStorage.getItem(LS_TS)||0);
+function hexToBytes(h){const a=new Uint8Array(h.length/2);for(let i=0;i<a.length;i++)a[i]=parseInt(h.substr(i*2,2),16);return a;}
+function b64enc(buf){let s='';const b=new Uint8Array(buf);for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s);}
+function b64dec(s){const bin=atob(s);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a;}
+let _aesKey=null;
+async function aesKey(){if(_aesKey)return _aesKey;_aesKey=await crypto.subtle.importKey('raw',hexToBytes(SYNC_KEY_HEX),{name:'AES-GCM'},false,['encrypt','decrypt']);return _aesKey;}
+async function encJSON(obj){const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},await aesKey(),new TextEncoder().encode(JSON.stringify(obj)));return b64enc(iv)+'.'+b64enc(ct);}
+async function decStr(s){const p=s.split('.');if(p.length!==2)throw new Error('bad');const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64dec(p[0])},await aesKey(),b64dec(p[1]));return JSON.parse(new TextDecoder().decode(pt));}
+let _pushTimer=null;
+function schedulePush(){if(!syncEnabled)return;stateTs=Date.now();localStorage.setItem(LS_TS,stateTs);clearTimeout(_pushTimer);_pushTimer=setTimeout(pushNow,1200);}
+async function pushNow(){try{const blob=await encJSON({read:[...readSet],imp:[...impSet],ts:stateTs});await fetch(SYNC_URL,{method:'PUT',headers:{'Authorization':'Bearer '+SYNC_TOKEN},body:blob});}catch(e){}}
+async function syncPull(){
+  if(!syncEnabled)return;
+  try{
+    const r=await fetch(SYNC_URL,{headers:{'Authorization':'Bearer '+SYNC_TOKEN}});
+    const txt=(await r.text()).trim();
+    const hadLocal=localStorage.getItem(LS_TS)!==null;
+    if(!txt){ if(readSet.size||impSet.size){stateTs=Date.now();localStorage.setItem(LS_TS,stateTs);pushNow();} return; }
+    const remote=await decStr(txt);
+    if(!hadLocal){
+      (remote.read||[]).forEach(x=>readSet.add(x));(remote.imp||[]).forEach(x=>impSet.add(x));
+      persistLocal();stateTs=Date.now();localStorage.setItem(LS_TS,stateTs);pushNow();render();
+    }else if((remote.ts||0)>stateTs){
+      readSet=new Set(remote.read||[]);impSet=new Set(remote.imp||[]);
+      stateTs=remote.ts;localStorage.setItem(LS_TS,stateTs);persistLocal();render();
+    }
+  }catch(e){}
+}
 
 let page='inbox', starF='all', catF=new Set(), qF='';
 
@@ -322,6 +356,7 @@ document.getElementById('bulk-read').addEventListener('click',()=>{
 
 buildChips();
 render();
+syncPull();
 </script>
 </body>
 </html>

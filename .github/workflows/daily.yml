@@ -50,11 +50,20 @@ jobs:
         env:
           VIEW_PASSWORD: ${{ secrets.VIEW_PASSWORD }}
           STATICRYPT_SALT: ${{ secrets.STATICRYPT_SALT }}
+          SYNC_URL: ${{ secrets.SYNC_URL }}
+          SYNC_TOKEN: ${{ secrets.SYNC_TOKEN }}
+          SYNC_KEY: ${{ secrets.SYNC_KEY }}
         run: |
           # 状態ファイルを暗号化して保存
           openssl enc -aes-256-cbc -pbkdf2 -salt \
             -in notifications.json -out notifications.json.enc \
             -pass env:VIEW_PASSWORD
+          # 同期用の値をページに埋め込む(この後 staticrypt で暗号化されるので公開時は暗号文)
+          sed -i \
+            -e "s|__SYNC_URL__|$SYNC_URL|g" \
+            -e "s|__SYNC_TOKEN__|$SYNC_TOKEN|g" \
+            -e "s|__SYNC_KEY__|$SYNC_KEY|g" \
+            archive.html
           # archive.html にパスワード錠をかけて docs/index.html として出力
           # --salt 固定 + 同じパスワードで「記憶」が毎日のビルドをまたいで有効になる
           mkdir -p docs

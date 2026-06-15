@@ -1,0 +1,7 @@
+name = "ritumatome-sync"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+[[kv_namespaces]]
+binding = "SYNC_KV"
+id = "2a21692d6d994b5cb761f1098f28161d"
