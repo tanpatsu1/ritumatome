@@ -85,5 +85,11 @@ jobs:
             echo "変更なし(新着なし)"
           else
             git commit -m "auto: 自動更新 $(date -u +%Y-%m-%dT%H:%MZ)"
-            git push
+            # リモートが進んでいても安全に取り込んでから push (競合対策・最大3回)
+            for i in 1 2 3; do
+              git pull --rebase --autostash origin master || true
+              if git push; then echo "push成功"; break; fi
+              echo "push再試行 $i"
+              sleep 3
+            done
           fi
